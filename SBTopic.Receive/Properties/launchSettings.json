@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "SBTopic.Receive": {
+      "commandName": "Project",
+      "commandLineArgs": "Executor"
+    }
+  }
+}
