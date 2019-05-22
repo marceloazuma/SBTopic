@@ -1,24 +1,30 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Azure.ServiceBus;
 using SBTopic.Model;
 
 namespace SBTopic.Receive
 {
+    /// <summary>
+    /// This class emulates a window in a client app, like a ViewModel in MVVM.
+    /// </summary>
     public class ClientReceive
     {
         private int _ClientId;
         private Random _Random;
 
+        /// <summary>
+        /// This queue will have a copy of the messages received from the Service Bus, so they can be handled according the processing capacity.
+        /// </summary>
         private ConcurrentQueue<SBMessage> _ClientReceiveQueue = new ConcurrentQueue<SBMessage>();
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="clientId">A value just to differentiate each instance</param>
         public ClientReceive(int clientId)
         {
-            this._ClientId = clientId;
+            _ClientId = clientId;
             _Random = new Random(_ClientId);
 
             SBReceive.SBEvent += SBEventHandler;
@@ -28,6 +34,10 @@ namespace SBTopic.Receive
             bgThread.Start();
         }
 
+        /// <summary>
+        /// Handle the event received from the SBReceive.Dispatcher()
+        /// </summary>
+        /// <param name="message"></param>
         public void SBEventHandler(SBMessage message)
         {
             SBMessage sbMessage = new SBMessage()
@@ -39,6 +49,9 @@ namespace SBTopic.Receive
             _ClientReceiveQueue.Enqueue(sbMessage);
         }
 
+        /// <summary>
+        /// Thread dispatcher to process the messages in the local queue
+        /// </summary>
         private void Dispatcher()
         {
             while (!SBReceive.Stop)
@@ -47,17 +60,21 @@ namespace SBTopic.Receive
 
                 if (dequeued)
                 {
-                    UpdateWindows(message);
+                    MessageHandler(message);
                 }
                 else
                 {
-                    Console.WriteLine("Dispatcher().Sleep()");
+                    Console.WriteLine($"Dispatcher().Sleep() - ClientId: {_ClientId}");
                     Thread.Sleep(100);
                 }
             }
         }
 
-        private void UpdateWindows(SBMessage message)
+        /// <summary>
+        /// Emulates the messages processing
+        /// </summary>
+        /// <param name="message"></param>
+        private void MessageHandler(SBMessage message)
         {
             Console.WriteLine($"SBEventHandler - ClientId: {_ClientId} - SequenceNumber:{message.SequenceNumber} - Body:{message.Body}");
 
