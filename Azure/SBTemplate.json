@@ -1,0 +1,47 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "servicebus_namespace": {
+            "defaultValue": "my-sb-test",
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.ServiceBus/namespaces",
+            "apiVersion": "2017-04-01",
+            "name": "[parameters('servicebus_namespace')]",
+            "location": "Brazil South",
+            "sku": {
+                "name": "Standard",
+                "tier": "Standard"
+            },
+            "properties": {
+                "provisioningState": "Succeeded",
+                "metricId": "[concat('abe76e3f-76b7-4c70-9f9c-16686b969eae:', parameters('servicebus_namespace'))]",
+                "createdAt": "2019-05-20T16:26:18.793Z",
+                "updatedAt": "2019-05-20T17:33:44.06Z",
+                "serviceBusEndpoint": "[concat('https://', parameters('servicebus_namespace'), '.servicebus.windows.net:443/')]",
+                "status": "Active"
+            }
+        },
+        {
+            "type": "Microsoft.ServiceBus/namespaces/AuthorizationRules",
+            "apiVersion": "2017-04-01",
+            "name": "[concat(parameters('servicebus_namespace'), '/RootManageSharedAccessKey')]",
+            "location": "Brazil South",
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', parameters('servicebus_namespace'))]"
+            ],
+            "properties": {
+                "rights": [
+                    "Listen",
+                    "Manage",
+                    "Send"
+                ]
+            }
+        }
+    ]
+}
