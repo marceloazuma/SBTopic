@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Azure.ServiceBus.Primitives;
 using Newtonsoft.Json;
@@ -15,7 +17,7 @@ namespace SBTopic.Receive
     {
         private static ISubscriptionClient _SubscriptionClient;
 
-        private static ConcurrentQueue<SBMessage> _SBReceiveQueue = new ConcurrentQueue<SBMessage>();
+        public static List<ActionBlock<SBMessage>> SBMessageActionBlockList = new List<ActionBlock<SBMessage>>();
 
         private static string _Destinatary { get; set; }
 
@@ -35,10 +37,6 @@ namespace SBTopic.Receive
             _SBSubscriptionConnectionData = await GetSBSubscription(Destinatary);
 
             ClientAsync(_SBSubscriptionConnectionData);
-
-            ThreadStart threadStart = new ThreadStart(Dispatcher);
-            Thread bgThread = new Thread(threadStart);
-            bgThread.Start();
         }
 
         private static void ClientAsync(SBSubscriptionConnectionData sbSubscriptionConnectionData)
@@ -90,15 +88,14 @@ namespace SBTopic.Receive
                 Body = Encoding.UTF8.GetString(message.Body)
             };
 
-            _SBReceiveQueue.Enqueue(sbMessage);
+            foreach (ActionBlock<SBMessage> SBMessageActionBlock in SBMessageActionBlockList)
+            {
+                SBMessageActionBlock.Post(sbMessage);
+            }
 
             // Complete the message so that it is not received again.
             // This can be done only if the subscriptionClient is created in ReceiveMode.PeekLock mode (which is the default).
             await _SubscriptionClient.CompleteAsync(message.SystemProperties.LockToken);
-
-            // Note: Use the cancellationToken passed as necessary to determine if the subscriptionClient has already been closed.
-            // If subscriptionClient has already been closed, you can choose to not call CompleteAsync() or AbandonAsync() etc.
-            // to avoid unnecessary exceptions.
         }
 
         private static async Task ExceptionReceivedHandler(ExceptionReceivedEventArgs exceptionReceivedEventArgs)
@@ -141,24 +138,6 @@ namespace SBTopic.Receive
             string content = await response.Content.ReadAsStringAsync();
 
             return JsonConvert.DeserializeObject<SBSubscriptionConnectionData>(content);
-        }
-
-        private static void Dispatcher()
-        {
-            while (!Stop)
-            {
-                bool dequeued = _SBReceiveQueue.TryDequeue(out SBMessage message);
-
-                if (dequeued)
-                {
-                    SBEvent.Invoke(message);
-                }
-                else
-                {
-                    Console.WriteLine("Dispatcher().Sleep()");
-                    Thread.Sleep(100);
-                }
-            }
         }
     }
 }

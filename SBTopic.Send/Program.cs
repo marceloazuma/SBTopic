@@ -9,7 +9,7 @@ namespace SBTopic.Send
 {
     class Program
     {
-        const string ServiceBusConnectionString = "Endpoint=sb://xp-sbteste.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=g6935CK+GTKKNOEyZOFj500XdpMWHusWAc2+ZbYIXUU=";
+        const string ServiceBusConnectionString = "Endpoint=sb://xp-sbteste.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=gGIQAMi5wMjVABTnL7ZDxE7uupHeYDnI7Ks7G9QPXi4=";
         const string TopicName = "Teste";
         static ITopicClient topicClient;
 

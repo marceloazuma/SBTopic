@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Threading;
+using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 using SBTopic.Model;
 
 namespace SBTopic.Receive
@@ -8,7 +10,7 @@ namespace SBTopic.Receive
     /// <summary>
     /// This class emulates a window in a client app, like a ViewModel in MVVM.
     /// </summary>
-    public class ClientReceive
+    public class ClientReceive : IDisposable
     {
         private int _ClientId;
         private Random _Random;
@@ -16,7 +18,7 @@ namespace SBTopic.Receive
         /// <summary>
         /// This queue will have a copy of the messages received from the Service Bus, so they can be handled according the processing capacity.
         /// </summary>
-        private ConcurrentQueue<SBMessage> _ClientReceiveQueue = new ConcurrentQueue<SBMessage>();
+        private ActionBlock<SBMessage> _ClientReceiveActionBlock = null;
 
         /// <summary>
         /// 
@@ -27,47 +29,9 @@ namespace SBTopic.Receive
             _ClientId = clientId;
             _Random = new Random(_ClientId);
 
-            SBReceive.SBEvent += SBEventHandler;
+            _ClientReceiveActionBlock = new ActionBlock<SBMessage>(sbMessage => MessageHandler(sbMessage)); ;
 
-            ThreadStart threadStart = new ThreadStart(Dispatcher);
-            Thread bgThread = new Thread(threadStart);
-            bgThread.Start();
-        }
-
-        /// <summary>
-        /// Handle the event received from the SBReceive.Dispatcher()
-        /// </summary>
-        /// <param name="message"></param>
-        public void SBEventHandler(SBMessage message)
-        {
-            SBMessage sbMessage = new SBMessage()
-            {
-                SequenceNumber = message.SequenceNumber,
-                Body = message.Body
-            };
-
-            _ClientReceiveQueue.Enqueue(sbMessage);
-        }
-
-        /// <summary>
-        /// Thread dispatcher to process the messages in the local queue
-        /// </summary>
-        private void Dispatcher()
-        {
-            while (!SBReceive.Stop)
-            {
-                bool dequeued = _ClientReceiveQueue.TryDequeue(out SBMessage message);
-
-                if (dequeued)
-                {
-                    MessageHandler(message);
-                }
-                else
-                {
-                    Console.WriteLine($"Dispatcher().Sleep() - ClientId: {_ClientId}");
-                    Thread.Sleep(100);
-                }
-            }
+            SBReceive.SBMessageActionBlockList.Add(_ClientReceiveActionBlock);
         }
 
         /// <summary>
@@ -84,5 +48,38 @@ namespace SBTopic.Receive
 
             Console.WriteLine($"SBEventHandler - ClientId: {_ClientId} - Wait: {wait} - SequenceNumber:{message.SequenceNumber} - Body:{message.Body}");
         }
+
+        #region IDisposable Support
+        private bool disposedValue = false; // To detect redundant calls
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    if (_ClientReceiveActionBlock != null)
+                        SBReceive.SBMessageActionBlockList.Remove(_ClientReceiveActionBlock);
+                }
+
+                disposedValue = true;
+            }
+        }
+
+        ~ClientReceive()
+        {
+            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            Dispose(false);
+        }
+
+        // This code added to correctly implement the disposable pattern.
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            Dispose(true);
+
+            GC.SuppressFinalize(this);
+        }
+        #endregion
     }
 }

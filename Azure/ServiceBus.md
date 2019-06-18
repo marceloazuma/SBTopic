@@ -9,6 +9,8 @@ You can create it using the following commands in Azure CLI:
 
 `$Location = "<Location>"` ## Replace with the location, like "Brazil South"
 
+`az login` ## Authentication
+
 `az group create --name $ResourceGroup --location $Location`
 
 `az group deployment create --resource-group $ResourceGroup --template-file SBTemplate.json --parameters @SBTemplate-parameters.json`
