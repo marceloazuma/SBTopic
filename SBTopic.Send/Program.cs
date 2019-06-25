@@ -9,7 +9,7 @@ namespace SBTopic.Send
 {
     class Program
     {
-        const string ServiceBusConnectionString = "Endpoint=sb://xp-sbteste.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=gGIQAMi5wMjVABTnL7ZDxE7uupHeYDnI7Ks7G9QPXi4=";
+        const string ServiceBusConnectionString = "Endpoint=sb://xp-sbteste.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=Dq698VqvxAJKSWPsOOuEuYVKXQjjnGtpvM7j1EaCIZU=";
         const string TopicName = "Teste";
         static ITopicClient topicClient;
 
@@ -20,7 +20,7 @@ namespace SBTopic.Send
 
         static async Task MainAsync()
         {
-            const int numberOfMessages = 100;
+            const int numberOfMessages = 105;
             topicClient = new TopicClient(ServiceBusConnectionString, TopicName);
 
             // Send messages.
@@ -35,6 +35,8 @@ namespace SBTopic.Send
         {
             try
             {
+                Random random = new Random();
+
                 for (var i = 0; i < numberOfMessagesToSend; i++)
                 {
                     // Create a new message to send to the topic
@@ -49,7 +51,9 @@ namespace SBTopic.Send
                     // Send the message to the topic
                     await topicClient.SendAsync(message);
 
-                    //Thread.Sleep(10);
+                    int wait = random.Next(1000);
+
+                    Thread.Sleep(wait);
                 }
             }
             catch (Exception exception)

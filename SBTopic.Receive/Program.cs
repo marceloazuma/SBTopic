@@ -18,7 +18,7 @@ namespace SBTopic.Receive
             {
                 using (ClientReceive clientReceive2 = new ClientReceive(2))
                 {
-                    using (ClientReceive clientReceive3 = new ClientReceive(3))
+                    using (BatchClientReceive batchClientReceive3 = new BatchClientReceive(3))
                     { 
                         Console.WriteLine("======================================================");
                         Console.WriteLine("Press ENTER key to exit after receiving all the messages.");
@@ -26,7 +26,11 @@ namespace SBTopic.Receive
 
                         Console.ReadLine();
                     }
+
+                    Console.ReadLine();
                 }
+
+                Console.ReadLine();
             }
         }
     }

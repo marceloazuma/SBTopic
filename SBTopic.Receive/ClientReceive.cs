@@ -16,9 +16,16 @@ namespace SBTopic.Receive
         private Random _Random;
 
         /// <summary>
-        /// This queue will have a copy of the messages received from the Service Bus, so they can be handled according the processing capacity.
+        /// Processador de mensagens
         /// </summary>
-        private ActionBlock<SBMessage> _ClientReceiveActionBlock = null;
+        private ActionBlock<SBMessage> _ClientReceiveActionBlock;
+
+        /// <summary>
+        /// Buffer de entrada de mensagens para o ClientReceive
+        /// </summary>
+        private BufferBlock<SBMessage> _ClientReceiveBufferBlock = new BufferBlock<SBMessage>();
+
+        private IDisposable _ClientReceiveActionBlockLink;
 
         /// <summary>
         /// 
@@ -29,9 +36,11 @@ namespace SBTopic.Receive
             _ClientId = clientId;
             _Random = new Random(_ClientId);
 
-            _ClientReceiveActionBlock = new ActionBlock<SBMessage>(sbMessage => MessageHandler(sbMessage)); ;
+            _ClientReceiveActionBlock = new ActionBlock<SBMessage>(sbMessage => MessageHandler(sbMessage));
 
-            SBReceive.SBMessageActionBlockList.Add(_ClientReceiveActionBlock);
+            _ClientReceiveActionBlockLink = _ClientReceiveBufferBlock.LinkTo(_ClientReceiveActionBlock);
+
+            SBReceive.SBMessageBufferBlockList.Add(_ClientReceiveBufferBlock);
         }
 
         /// <summary>
@@ -40,13 +49,13 @@ namespace SBTopic.Receive
         /// <param name="message"></param>
         private void MessageHandler(SBMessage message)
         {
-            Console.WriteLine($"SBEventHandler - ClientId: {_ClientId} - SequenceNumber:{message.SequenceNumber} - Body:{message.Body}");
+            Console.WriteLine($"MessageHandler - ClientId: {_ClientId} - SequenceNumber:{message.SequenceNumber} - Body:{message.Body}");
 
             int wait = _Random.Next(1000 * _ClientId);
 
             Thread.Sleep(wait);
 
-            Console.WriteLine($"SBEventHandler - ClientId: {_ClientId} - Wait: {wait} - SequenceNumber:{message.SequenceNumber} - Body:{message.Body}");
+            Console.WriteLine($"MessageHandler - ClientId: {_ClientId} - Wait: {wait} - SequenceNumber:{message.SequenceNumber} - Body:{message.Body}");
         }
 
         #region IDisposable Support
@@ -58,8 +67,11 @@ namespace SBTopic.Receive
             {
                 if (disposing)
                 {
-                    if (_ClientReceiveActionBlock != null)
-                        SBReceive.SBMessageActionBlockList.Remove(_ClientReceiveActionBlock);
+                    if (_ClientReceiveBufferBlock != null)
+                        SBReceive.SBMessageBufferBlockList.Remove(_ClientReceiveBufferBlock);
+
+                    if (_ClientReceiveActionBlockLink != null)
+                        _ClientReceiveActionBlockLink.Dispose();
                 }
 
                 disposedValue = true;

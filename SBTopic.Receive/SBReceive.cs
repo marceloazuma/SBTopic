@@ -17,7 +17,7 @@ namespace SBTopic.Receive
     {
         private static ISubscriptionClient _SubscriptionClient;
 
-        public static List<ActionBlock<SBMessage>> SBMessageActionBlockList = new List<ActionBlock<SBMessage>>();
+        public static List<BufferBlock<SBMessage>> SBMessageBufferBlockList = new List<BufferBlock<SBMessage>>();
 
         private static string _Destinatary { get; set; }
 
@@ -88,9 +88,9 @@ namespace SBTopic.Receive
                 Body = Encoding.UTF8.GetString(message.Body)
             };
 
-            foreach (ActionBlock<SBMessage> SBMessageActionBlock in SBMessageActionBlockList)
+            foreach (BufferBlock<SBMessage> SBMessageBufferBlock in SBMessageBufferBlockList)
             {
-                SBMessageActionBlock.Post(sbMessage);
+                await SBMessageBufferBlock.SendAsync(sbMessage);
             }
 
             // Complete the message so that it is not received again.

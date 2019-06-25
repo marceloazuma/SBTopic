@@ -9,7 +9,7 @@ namespace SBTopic.API.Services
 {
     public class SBSubscription
     {
-        public string _ManagementConnectionString = "Endpoint=sb://xp-sbteste.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=gGIQAMi5wMjVABTnL7ZDxE7uupHeYDnI7Ks7G9QPXi4=";
+        public string _ManagementConnectionString = "Endpoint=sb://xp-sbteste.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=Dq698VqvxAJKSWPsOOuEuYVKXQjjnGtpvM7j1EaCIZU=";
 
         public string _ListenConnectionString;
 
